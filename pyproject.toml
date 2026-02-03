@@ -1,0 +1,11 @@
+[project]
+name = "device-checker"
+version = "0.1.0"
+description = "A script to check for new devices in an HTML table"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "requests",
+    "beautifulsoup4",
+    "plyer"
+]

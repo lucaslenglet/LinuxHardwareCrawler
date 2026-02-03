@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import json
 import os
 import argparse
-from plyer import notification
 
 def fetch_table(url):
     """
@@ -55,6 +54,7 @@ def save_devices(file_path, devices):
     """
     Saves the devices to the JSON file.
     """
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'w') as f:
         json.dump(devices, f, indent=4)
 
@@ -74,11 +74,6 @@ def compare_and_notify(current, existing, file_path):
     if new_devices:
         for new in new_devices:
             print(f"New device added: {new}")
-            notification.notify(
-                title="New Device Detected",
-                message=f"New device: {new}",
-                app_name="Device Checker"
-            )
         # Update the file with current devices
         save_devices(file_path, current)
     else:
@@ -86,8 +81,8 @@ def compare_and_notify(current, existing, file_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Check for new devices in an HTML table from a URL.")
-    parser.add_argument('url', help='The URL to fetch the HTML from.')
-    parser.add_argument('--file', default='devices.json', help='Path to the JSON file for storing devices (default: devices.json).')
+    parser.add_argument('--url', default='https://linux-hardware.org/?view=search&vendor=amd&name=ryzen%205%20150', help='The URL to fetch the HTML from.')
+    parser.add_argument('--file', default='./output/devices.json', help='Path to the JSON file for storing devices (default: ./output/devices.json).')
     args = parser.parse_args()
     
     try:

@@ -1,6 +1,6 @@
 # Device Checker
 
-A simple Python script that fetches an HTML page, extracts a table with id "devices", converts it to objects, and checks for new devices compared to a stored list. If new devices are found, it notifies the user via desktop notification and updates the stored list.
+A simple Python script that fetches an HTML page, extracts a table with id "devices", converts it to objects, and checks for new devices compared to a stored list. If new devices are found, it prints to console and updates the stored list.
 
 ## Requirements
 
@@ -12,27 +12,41 @@ A simple Python script that fetches an HTML page, extracts a table with id "devi
 
 First, ensure dependencies are installed by running `uv sync` in the project directory.
 
-Then, run the script with a URL:
+Then, run the script:
 
 ```
-uv run python main.py <URL> [--file <file_path>]
+uv run python main.py [--url <URL>] [--file <file_path>]
 ```
 
-- `<URL>`: The URL of the webpage containing the table with id "devices".
-- `--file`: Optional path to the JSON file for storing devices (default: `devices.json`).
+- `--url`: Optional URL of the webpage containing the table with id "devices" (default: https://linux-hardware.org/?view=search&vendor=amd&name=ryzen%205%20150).
+- `--file`: Optional path to the JSON file for storing devices (default: `./output/devices.json`).
 
 Example:
 
 ```
-uv run python main.py https://example.com/devices
+uv run python main.py
 ```
 
 The script will:
 1. Fetch the HTML from the URL.
 2. Parse the table with id "devices".
-3. Compare the devices to the existing ones in `devices.json`.
-4. If new devices are detected, show a desktop notification and print to console.
-5. Update `devices.json` with the current devices.
+3. Compare the devices to the existing ones in `./output/devices.json`.
+4. If new devices are detected, print to console.
+5. Update `./output/devices.json` with the current devices.
+
+## Docker
+
+Build the Docker image:
+
+```
+docker build -t linux-hardware-crawler .
+```
+
+Run the container (mount the output directory to persist data):
+
+```
+docker run --rm -v ./output:/app/output linux-hardware-crawler
+```
 
 ## Assumptions
 
@@ -44,11 +58,9 @@ The script will:
 
 - **Table not found**: Ensure the webpage has a `<table id="devices">`.
 - **Network errors**: Check your internet connection and the URL.
-- **Permission errors**: Ensure write access to the directory for `devices.json`.
-- **Notifications not working**: On Windows, plyer should work; if not, check if notifications are enabled.
+- **Permission errors**: Ensure write access to the directory for `./output/devices.json`.
 
 ## Dependencies
 
 - `requests`: For HTTP requests.
 - `beautifulsoup4`: For HTML parsing.
-- `plyer`: For desktop notifications.

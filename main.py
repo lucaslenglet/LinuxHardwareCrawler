@@ -3,6 +3,8 @@ from bs4 import BeautifulSoup
 import json
 import os
 import argparse
+from datetime import datetime
+from typing import List, Dict
 
 def fetch_table(url):
     """
@@ -76,8 +78,51 @@ def compare_and_notify(current, existing, file_path):
             print(f"New device added: {new}")
         # Update the file with current devices
         save_devices(file_path, current)
+        # Send Discord notification
+        send_discord_notification(new_devices, len(current), len(existing))
     else:
         print("No new devices detected.")
+
+def send_discord_notification(new_devices: List[Dict], current_total: int, existing_total: int) -> None:
+    """
+    Sends a notification to Discord webhook about new devices found.
+    """
+    discord_webhook = os.getenv('DISCORD_WEBHOOK_URL')
+    if not discord_webhook:
+        print("Warning: DISCORD_WEBHOOK_URL environment variable not set. Skipping Discord notification.")
+        return
+    
+    try:
+        embed_fields = []
+        for device in new_devices:
+            field_value = "\n".join([f"**{k}:** {v}" for k, v in device.items()])
+            embed_fields.append({
+                "name": f"New Device",
+                "value": field_value[:1024] if len(field_value) <= 1024 else field_value[:1021] + "...",
+                "inline": False
+            })
+        
+        payload = {
+            "username": "Linux Hardware Crawler",
+            "avatar_url": "https://linux-hardware.org/static/images/logo.png",
+            "embeds": [
+                {
+                    "title": "🆕 New Devices Detected",
+                    "description": f"Found {len(new_devices)} new device(s)",
+                    "color": 3066993,  # Green
+                    "fields": embed_fields[:25],  # Discord limit is 25 fields per embed
+                    "footer": {
+                        "text": f"Total devices: {current_total} (Previous: {existing_total}) | {datetime.now().isoformat()}"
+                    }
+                }
+            ]
+        }
+        
+        response = requests.post(discord_webhook, json=payload)
+        response.raise_for_status()
+        print(f"Discord notification sent successfully. ({len(new_devices)} new devices)")
+    except Exception as e:
+        print(f"Failed to send Discord notification: {e}")
 
 def main():
     parser = argparse.ArgumentParser(description="Check for new devices in an HTML table from a URL.")
@@ -91,6 +136,24 @@ def main():
         compare_and_notify(current_devices, existing_devices, args.file)
     except Exception as e:
         print(f"Error: {e}")
+        # Send error notification to Discord
+        discord_webhook = os.getenv('DISCORD_WEBHOOK_URL')
+        if discord_webhook:
+            try:
+                payload = {
+                    "username": "Linux Hardware Crawler",
+                    "embeds": [
+                        {
+                            "title": "❌ Error in Device Crawler",
+                            "description": str(e),
+                            "color": 15158332,  # Red
+                            "footer": {"text": datetime.now().isoformat()}
+                        }
+                    ]
+                }
+                requests.post(discord_webhook, json=payload)
+            except Exception as discord_error:
+                print(f"Failed to send error notification to Discord: {discord_error}")
 
 if __name__ == "__main__":
     main()

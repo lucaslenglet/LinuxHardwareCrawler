@@ -15,7 +15,7 @@ First, ensure dependencies are installed by running `uv sync` in the project dir
 Then, run the script:
 
 ```
-uv run python main.py [--url <URL>] [--file <file_path>]
+uv run main.py [--url <URL>] [--file <file_path>]
 ```
 
 - `--url`: Optional URL of the webpage containing the table with id "devices" (default: https://linux-hardware.org/?view=search&vendor=amd&name=ryzen%205%20150).
@@ -24,7 +24,7 @@ uv run python main.py [--url <URL>] [--file <file_path>]
 Example:
 
 ```
-uv run python main.py
+uv run main.py
 ```
 
 The script will:

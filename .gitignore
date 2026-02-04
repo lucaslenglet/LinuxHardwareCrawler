@@ -1,4 +1,5 @@
 devices.json
+output/devices.json
 
 # General
 .DS_Store

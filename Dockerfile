@@ -1,29 +1,35 @@
-# Multi-stage build to reduce image size
-FROM python:3.8-alpine AS builder
+# Build stage: install dependencies with uv
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
 
 # Install uv
-RUN pip install uv
+RUN pip install --no-cache-dir uv
 
-# Set working directory
-WORKDIR /app
-
-# Copy dependency files
+# Copy project files
 COPY pyproject.toml uv.lock ./
 
-# Install dependencies using uv
-RUN uv sync --frozen --no-install-project
+# Create venv and install dependencies
+RUN uv venv /opt/venv && \
+    uv pip install --python /opt/venv --no-cache-dir .
 
-# Copy source
-COPY main.py devices.json ./
+# Runtime stage: minimal image with only runtime dependencies
+FROM python:3.12-alpine
 
-# Final stage
-FROM python:3.8-alpine
-
-# Copy the virtual environment from builder
-COPY --from=builder /app /app
-
-# Set working directory
 WORKDIR /app
 
+# Copy only the virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy application code
+COPY main.py .
+
+# Set environment to use the venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+# Create output directory
+RUN mkdir -p output
+
 # Run the script
-CMD ["/app/.venv/bin/python", "main.py"]
+ENTRYPOINT ["/opt/venv/bin/python", "main.py"]
